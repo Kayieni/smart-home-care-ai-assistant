@@ -1,0 +1,135 @@
+{
+  "project": "invisible_caregiver",
+  "version": "1.1",
+
+  "sensors": [
+
+    {
+      "sensor_id": "BED_PRESSURE_01",
+      "type": "pressure",
+      "location": "bedroom_bed",
+      "activity": "sleep_wake",
+      "risk_category": "movement",
+      "possible_values": ["occupied", "empty"]
+    },
+    {
+      "sensor_id": "BEDROOM_PIR_01",
+      "type": "motion",
+      "location": "bedroom",
+      "activity": "movement",
+      "risk_category": "movement",
+      "possible_values": ["motion", "no_motion"]
+    },
+
+    {
+      "sensor_id": "BATH_WATER_01",
+      "type": "water_flow",
+      "location": "bathroom_sink",
+      "activity": "hand_washing",
+      "risk_category": "hygiene",
+      "possible_values": ["flow", "no_flow"]
+    },
+    {
+      "sensor_id": "SOAP_VIB_01",
+      "type": "vibration",
+      "location": "soap_dispenser",
+      "activity": "hand_washing",
+      "risk_category": "hygiene",
+      "possible_values": ["used", "not_used"]
+    },
+    {
+      "sensor_id": "TOILET_OCCUPANCY_01",
+      "type": "occupancy",
+      "location": "bathroom_toilet",
+      "activity": "toilet_use",
+      "risk_category": "hygiene",
+      "possible_values": ["occupied", "empty"]
+    },
+
+    {
+      "sensor_id": "FRIDGE_DOOR_01",
+      "type": "contact",
+      "location": "kitchen_fridge",
+      "activity": "eating",
+      "risk_category": "activity",
+      "possible_values": ["open", "closed"]
+    },
+    {
+      "sensor_id": "KITCHEN_PIR_01",
+      "type": "motion",
+      "location": "kitchen",
+      "activity": "movement",
+      "risk_category": "activity",
+      "possible_values": ["motion", "no_motion"]
+    },
+    {
+      "sensor_id": "STOVE_POWER_01",
+      "type": "smart_plug",
+      "location": "kitchen_stove",
+      "activity": "cooking",
+      "risk_category": "safety",
+      "possible_values": ["on", "off"]
+    },
+    {
+      "sensor_id": "OVEN_TEMP_01",
+      "type": "temperature",
+      "location": "kitchen_oven",
+      "activity": "cooking",
+      "risk_category": "safety",
+      "possible_values": ["number (°C)"]
+    },
+
+    {
+      "sensor_id": "MED_BOX_01",
+      "type": "vibration",
+      "location": "medicine_box",
+      "activity": "medication",
+      "risk_category": "health",
+      "possible_values": ["used", "not_used"]
+    },
+
+    {
+      "sensor_id": "DOOR_CONTACT_01",
+      "type": "contact",
+      "location": "front_door",
+      "activity": "exit_home",
+      "risk_category": "safety",
+      "possible_values": ["open", "closed"]
+    },
+    {
+      "sensor_id": "HALLWAY_PIR_01",
+      "type": "motion",
+      "location": "hallway",
+      "activity": "movement",
+      "risk_category": "movement",
+      "possible_values": ["motion", "no_motion"]
+    },
+
+    {
+      "sensor_id": "WATER_HEATER_01",
+      "type": "smart_plug",
+      "location": "bathroom_heater",
+      "activity": "utility_usage",
+      "risk_category": "safety",
+      "possible_values": ["on", "off"]
+    },
+
+    {
+      "sensor_id": "BALCONY_PIR_01",
+      "type": "motion",
+      "location": "balcony",
+      "activity": "leisure",
+      "risk_category": "activity",
+      "possible_values": ["motion", "no_motion"]
+    },
+    {
+      "sensor_id": "SOIL_MOISTURE_01",
+      "type": "soil_moisture",
+      "location": "balcony_plants",
+      "activity": "plant_watering",
+      "risk_category": "activity",
+      "possible_values": ["number (%)"]
+    }
+
+  ]
+}

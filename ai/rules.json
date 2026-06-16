@@ -1,0 +1,8 @@
+{
+    "wake_up": "wake_up",
+    "hygiene": "hygiene",
+    "eating": "eating",
+    "medication": "medication_taken",
+    "cooking_risk": "cooking_risk",
+    "leaving_home": "leaving_home"
+}
