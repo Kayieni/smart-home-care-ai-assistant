@@ -1,0 +1,133 @@
+{
+  "date": "2026-06-17",
+  "total_events": 8,
+  "activities_detected": [
+    "wake_up",
+    "hygiene",
+    "eating",
+    "cooking_risk",
+    "leaving_home"
+  ],
+  "alert_counts": {
+    "critical": 1,
+    "high": 1,
+    "medium": 10,
+    "total": 12
+  },
+  "alerts": [
+    {
+      "timestamp": "2026-06-17T09:00:00",
+      "risk": "stove_on",
+      "severity": "high",
+      "reason": "Stove is still ON at 09:00. No off event detected in the last hour."
+    },
+    {
+      "timestamp": "2026-06-17T09:00:00",
+      "risk": "stove_unattended",
+      "severity": "critical",
+      "reason": "Stove is ON and front door was opened. Resident may have left home while cooking."
+    },
+    {
+      "timestamp": "2026-06-17T10:00:00",
+      "risk": "medication_missed",
+      "severity": "medium",
+      "reason": "Medication box not interacted with by 10:00."
+    },
+    {
+      "timestamp": "2026-06-17T13:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 13:00."
+    },
+    {
+      "timestamp": "2026-06-17T14:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 14:00."
+    },
+    {
+      "timestamp": "2026-06-17T15:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 15:00."
+    },
+    {
+      "timestamp": "2026-06-17T16:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 16:00."
+    },
+    {
+      "timestamp": "2026-06-17T17:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 17:00."
+    },
+    {
+      "timestamp": "2026-06-17T18:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 18:00."
+    },
+    {
+      "timestamp": "2026-06-17T19:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 19:00."
+    },
+    {
+      "timestamp": "2026-06-17T20:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 20:00."
+    },
+    {
+      "timestamp": "2026-06-17T21:00:00",
+      "risk": "inactivity",
+      "severity": "medium",
+      "reason": "No movement detected in 3 hours ending at 21:00."
+    }
+  ],
+  "timeline": [
+    {
+      "time": "07:00",
+      "sensor": "BED_PRESSURE_01",
+      "value": "empty"
+    },
+    {
+      "time": "07:15",
+      "sensor": "BATH_WATER_01",
+      "value": "flow"
+    },
+    {
+      "time": "07:17",
+      "sensor": "SOAP_VIB_01",
+      "value": "used"
+    },
+    {
+      "time": "08:00",
+      "sensor": "FRIDGE_DOOR_01",
+      "value": "open"
+    },
+    {
+      "time": "08:10",
+      "sensor": "STOVE_POWER_01",
+      "value": "on"
+    },
+    {
+      "time": "08:15",
+      "sensor": "DOOR_CONTACT_01",
+      "value": "open"
+    },
+    {
+      "time": "08:16",
+      "sensor": "HALLWAY_PIR_01",
+      "value": "motion"
+    },
+    {
+      "time": "09:30",
+      "sensor": "MED_BOX_01",
+      "value": "not_used"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "timestamp": "2026-06-17T09:00:00",
+    "risk": "stove_on",
+    "severity": "high",
+    "reason": "Stove is still ON at 09:00. No off event detected in the last hour."
+  },
+  {
+    "timestamp": "2026-06-17T09:00:00",
+    "risk": "stove_unattended",
+    "severity": "critical",
+    "reason": "Stove is ON and front door was opened. Resident may have left home while cooking."
+  },
+  {
+    "timestamp": "2026-06-17T10:00:00",
+    "risk": "medication_missed",
+    "severity": "medium",
+    "reason": "Medication box not interacted with by 10:00."
+  },
+  {
+    "timestamp": "2026-06-17T13:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 13:00."
+  },
+  {
+    "timestamp": "2026-06-17T14:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 14:00."
+  },
+  {
+    "timestamp": "2026-06-17T15:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 15:00."
+  },
+  {
+    "timestamp": "2026-06-17T16:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 16:00."
+  },
+  {
+    "timestamp": "2026-06-17T17:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 17:00."
+  },
+  {
+    "timestamp": "2026-06-17T18:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 18:00."
+  },
+  {
+    "timestamp": "2026-06-17T19:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 19:00."
+  },
+  {
+    "timestamp": "2026-06-17T20:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 20:00."
+  },
+  {
+    "timestamp": "2026-06-17T21:00:00",
+    "risk": "inactivity",
+    "severity": "medium",
+    "reason": "No movement detected in 3 hours ending at 21:00."
+  }
+]
