@@ -1,9 +1,9 @@
 import json
 import os
 
-# Load rule mapping (label configuration)
-_dir = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(_dir, "rules.json"), "r") as f:
+# Load rule mapping from config/
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+with open(os.path.join(_root, "config", "rules.json"), "r") as f:
     RULE_MAP = json.load(f)
 
 KNOWN_SENSORS = [
