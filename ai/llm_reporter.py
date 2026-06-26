@@ -30,33 +30,38 @@ def generate_report(activities: list, risks: list) -> str:
 
 def _ollama_report(activities: list, risks: list) -> str:
     activity_text = ", ".join(activities) if activities else "none detected"
+
+    # Sort risks so critical/high appear first
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    sorted_risks = sorted(risks, key=lambda r: severity_order.get(r.get("severity", "low"), 9))
     risk_lines = "\n".join(
         f"- [{r['severity'].upper()}] {r['risk']}: {r['reason']}"
-        for r in risks
-    ) if risks else "- none"
+        for r in sorted_risks
+    ) if sorted_risks else "- none"
 
-    from sensor_model_loader import sensor_context_for_prompt
-    sensor_context = sensor_context_for_prompt()
+    critical_and_high = [r for r in sorted_risks if r.get("severity") in ("critical", "high")]
+    urgent_note = (
+        "URGENT — the following CRITICAL or HIGH risks MUST be mentioned explicitly and prominently:\n"
+        + "\n".join(f"  * [{r['severity'].upper()}] {r['risk']}: {r['reason']}" for r in critical_and_high)
+    ) if critical_and_high else "No critical or high risks today."
 
     prompt = f"""You are a Compassionate Context Engine for an elderly care monitoring system.
-Your role is to translate raw sensor data into warm, empathetic, natural language summaries
-for family members and care professionals. Do not list raw sensor IDs or timestamps unless
-specifically asked. Focus on human-scale activities: waking up, hygiene, eating, medication,
-cooking, social or leisure activities, and safety. If high-severity risks exist, highlight
-them clearly but compassionately — the reader may be a worried family member.
+Translate sensor observations into a warm, clear caregiver report for a family member or care professional.
 
-SENSOR CATALOGUE (for reference):
-{sensor_context}
+RULES — follow these exactly:
+1. Write 3–5 plain-language sentences. No bullet points.
+2. {urgent_note}
+3. Each CRITICAL or HIGH risk must appear as its own sentence and be described clearly.
+4. Do NOT add any notes, disclaimers, meta-commentary, or text in parentheses after the report.
+5. Do not list raw sensor IDs. Describe events in human terms.
+6. Keep a compassionate, professional tone throughout.
 
-ACTIVITIES OBSERVED: {activity_text}
+ACTIVITIES OBSERVED TODAY: {activity_text}
 
-SAFETY RISKS:
+ALL SAFETY RISKS (sorted by severity):
 {risk_lines}
 
-Write a concise, empathetic caregiver report (3–5 sentences) summarising the resident's day
-and any concerns. Use plain language suitable for a family member or care professional.
-If there are high-severity or critical risks, make sure those are clearly highlighted.
-"""
+Write the caregiver report now:"""
 
     response = requests.post(
         OLLAMA_URL,
@@ -108,35 +113,59 @@ def _ollama_answer(question: str, summary: dict) -> str:
     alerts = summary.get("alerts", [])
     timeline = summary.get("timeline", [])
 
-    activity_text = ", ".join(activities) if activities else "none detected"
+    # Decode activities to plain English using the label map
+    activity_text = (
+        ", ".join(ACTIVITY_LABELS.get(a, a) for a in activities)
+        if activities else "none detected"
+    )
+
     risk_lines = "\n".join(
         f"- [{r['severity'].upper()}] {r['risk']}: {r['reason']}"
         for r in alerts
     ) if alerts else "- none"
+
+    # Decode raw sensor values to human-readable labels for the timeline
+    from sensor_model_loader import decode_value
     timeline_text = "\n".join(
-        f"  {e['time']} — {e['sensor']}: {e['value']}"
-        for e in timeline[:30]  # limit to avoid token overflow
+        f"  {e['time']} — {e['sensor']}: {decode_value(e['sensor'], e['value'])}"
+        for e in timeline[:40]
     ) if timeline else "  (no events)"
 
     prompt = f"""You are a Compassionate Context Engine for an elderly care monitoring system.
-Your role is to answer questions from family members and care professionals about the
-resident's day, based strictly on sensor data. Be warm, clear and honest. If the sensors
-did not capture something, say so — do not speculate beyond what the data shows.
+Answer questions from family members and care professionals about the resident's day.
+
+IMPORTANT — sensor interpretation rules (treat these as confirmed facts, not guesses):
+- BED_PRESSURE_01 = empty → resident got out of bed (woke up)
+- BED_PRESSURE_01 = occupied → resident went to bed
+- MED_BOX_01 = used → resident took their medication
+- SOAP_VIB_01 = used + BATH_WATER_01 = flow → resident washed their hands
+- TOILET_OCCUPANCY_01 = occupied → resident used the toilet
+- WATER_HEATER_01 = on → resident took a shower
+- FRIDGE_DOOR_01 = open → resident had a meal or snack
+- STOVE_POWER_01 = on → resident was cooking
+- DOOR_CONTACT_01 = open → resident opened the front door (left or arrived home)
+- BALCONY_PIR_01 = motion → resident was on the balcony
+- SOIL_MOISTURE_01 reading → resident watered the plants
+- PIR sensors = motion → resident was present in that room
+
+When a sensor event is in the data, state its meaning as fact. Do not hedge with
+phrases like "may indicate", "suggests", or "cannot confirm" — the sensor data IS
+the evidence. Only say something is unknown if no relevant sensor fired at all.
 
 Today's summary for {summary.get('date', 'today')}:
 
-ACTIVITIES OBSERVED: {activity_text}
+ACTIVITIES CONFIRMED: {activity_text}
 
-SAFETY RISKS:
+SAFETY ALERTS:
 {risk_lines}
 
 EVENT TIMELINE:
 {timeline_text}
 
-A caregiver asks: \"{question}\"
+Caregiver question: "{question}"
 
-Answer clearly and concisely in 1-3 sentences, based only on the data above.
-If the data does not contain enough information, say so honestly.
+Answer in 1-3 warm, clear sentences using only the data above.
+If no relevant sensor data exists, say so plainly.
 """
 
     response = requests.post(

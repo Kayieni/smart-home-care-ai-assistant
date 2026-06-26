@@ -167,11 +167,13 @@ def run_timeline(events: list, label: str = ""):
     base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     sorted_events = sorted(events, key=lambda e: (e[0], e[1]))
 
-    # Determine which dates this simulation covers (hour > 23 spills into next day)
-    max_hour = sorted_events[-1][0]
-    sim_dates = [base_date.strftime("%Y-%m-%d")]
-    if max_hour >= 24:
-        sim_dates.append((base_date + timedelta(days=1)).strftime("%Y-%m-%d"))
+    # Always clear today AND tomorrow — ensures stale events from a previous
+    # Hazard run (which writes 03:00 next-day events) don't bleed into a
+    # Normal or Decline re-run that ends before midnight.
+    sim_dates = [
+        base_date.strftime("%Y-%m-%d"),
+        (base_date + timedelta(days=1)).strftime("%Y-%m-%d"),
+    ]
 
     init_db()
     clear_events(sim_dates)

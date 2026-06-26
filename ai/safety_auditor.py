@@ -14,11 +14,87 @@ import json
 import os
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
 from storage import get_window, get_latest_sensor_states
 from app_settings import OLLAMA_URL, OLLAMA_MODEL, LLM_TIMEOUT, INACTIVITY_THRESHOLD_HOURS
 
+load_dotenv()
+
 ALERTS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "alerts.json")
 RULES_PATH  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", "rules.json")
+
+TB_HOST      = os.environ.get("TB_HOST", "https://eu.thingsboard.cloud")
+TB_JWT_TOKEN = os.environ.get("TB_JWT_TOKEN", "")
+TB_DEVICE_ID = os.environ.get("TB_DEVICE_ID", "")
+
+_TB_SEVERITY = {
+    "critical": "CRITICAL",
+    "high":     "MAJOR",
+    "medium":   "MINOR",
+    "low":      "WARNING",
+}
+
+
+def _clear_tb_alarms():
+    """Clear all active alarms for the device in ThingsBoard before a fresh simulation run."""
+    if not TB_JWT_TOKEN or not TB_DEVICE_ID:
+        return
+    headers = {"X-Authorization": f"Bearer {TB_JWT_TOKEN}", "Content-Type": "application/json"}
+    try:
+        # Fetch active alarms for this device (up to 100 — enough for any demo run)
+        resp = requests.get(
+            f"{TB_HOST}/api/alarm/DEVICE/{TB_DEVICE_ID}",
+            params={"page": 0, "pageSize": 100, "fetchOriginator": "false"},
+            headers=headers,
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            print(f"[ThingsBoard] Could not fetch alarms: {resp.status_code} {resp.text[:120]}")
+            return
+        alarms = resp.json().get("data", [])
+        cleared = 0
+        for alarm in alarms:
+            alarm_id = alarm.get("id", {}).get("id")
+            if not alarm_id:
+                continue
+            clear_resp = requests.post(
+                f"{TB_HOST}/api/alarm/{alarm_id}/clear",
+                headers=headers,
+                timeout=10,
+            )
+            if clear_resp.status_code in (200, 201):
+                cleared += 1
+        print(f"[ThingsBoard] Cleared {cleared} existing alarm(s) before new run.")
+    except Exception as e:
+        print(f"[ThingsBoard] Could not clear alarms: {e}")
+
+
+def _push_tb_alarm(alert: dict):
+    """Push a single alert to ThingsBoard as an alarm via the REST API.
+    Prints a warning if the request fails so problems are visible during demos."""
+    if not TB_JWT_TOKEN or not TB_DEVICE_ID:
+        print("[ThingsBoard] Skipping alarm push — TB_JWT_TOKEN or TB_DEVICE_ID not set in .env")
+        return
+    payload = {
+        "originator": {"entityType": "DEVICE", "id": TB_DEVICE_ID},
+        "type": alert.get("risk", "unknown"),
+        "severity": _TB_SEVERITY.get(alert.get("severity", "medium"), "MINOR"),
+        "status": "ACTIVE_UNACK",
+        "details": {"reason": alert.get("reason", ""), "timestamp": alert.get("timestamp", "")},
+    }
+    try:
+        resp = requests.post(
+            f"{TB_HOST}/api/alarm",
+            json=payload,
+            headers={"X-Authorization": f"Bearer {TB_JWT_TOKEN}", "Content-Type": "application/json"},
+            timeout=10,
+        )
+        if resp.status_code not in (200, 201):
+            # print(f"[ThingsBoard] Alarm pushed: {alert.get('risk')} ({resp.status_code})")
+        # else:
+            print(f"[ThingsBoard] Alarm push failed {resp.status_code}: {resp.text[:200]}")
+    except Exception as e:
+        print(f"[ThingsBoard] Alarm push error: {e}")
 
 
 def _load_care_plan() -> dict:
@@ -28,8 +104,12 @@ def _load_care_plan() -> dict:
 
 def _load_alerts() -> list:
     if os.path.exists(ALERTS_PATH):
-        with open(ALERTS_PATH, "r") as f:
-            return json.load(f)
+        try:
+            with open(ALERTS_PATH, "r", encoding="utf-8-sig") as f:
+                content = f.read().strip()
+                return json.loads(content) if content else []
+        except (json.JSONDecodeError, ValueError):
+            return []
     return []
 
 
@@ -40,9 +120,26 @@ def _save_alerts(alerts: list):
 
 
 def load_alerts_for_date(date: str) -> list:
-    """Return saved alerts for a specific date (YYYY-MM-DD) from alerts.json.
-    The narrator calls this instead of re-running the full audit."""
-    return [a for a in _load_alerts() if a.get("timestamp", "").startswith(date)]
+    """Return saved alerts for a given simulation day (YYYY-MM-DD).
+    Mirrors get_all_events_today: includes same-day alerts plus next-day
+    early-morning alerts (00:00–05:59) to capture overnight events such as
+    the 03:00 night-exit in the Hazard scenario."""
+    from datetime import datetime as _dt, timedelta as _td
+    next_day = (_dt.strptime(date, "%Y-%m-%d") + _td(days=1)).strftime("%Y-%m-%d")
+    result = []
+    for a in _load_alerts():
+        ts = a.get("timestamp", "")
+        if ts.startswith(date):
+            result.append(a)
+        elif ts.startswith(next_day):
+            # Include only the early-morning spillover (00:00–05:59)
+            try:
+                hour = int(ts[11:13])
+                if hour < 6:
+                    result.append(a)
+            except (ValueError, IndexError):
+                pass
+    return result
 
 
 def _make_alert(anchor_ts: str, risk: str, severity: str, reason: str) -> dict:
@@ -189,9 +286,16 @@ def _post_filter_llm_alerts(alerts: list, anchor_ts: str, window_events: list) -
     hour = datetime.fromisoformat(anchor_ts).hour
 
     # Window facts
+    # Use a 2h lookback for stove to match the updated RULE 1 (2h continuous on)
+    stove_2h = get_window(anchor_ts, hours=2)
     stove_on_in_window = any(
-        e["sensor_id"] == "STOVE_POWER_01" and e["value"] == "1" for e in window_events
+        e["sensor_id"] == "STOVE_POWER_01" and e["value"] == "1" for e in stove_2h
     )
+    stove_off_in_2h = any(
+        e["sensor_id"] == "STOVE_POWER_01" and e["value"] == "0" for e in stove_2h
+    )
+    # LLM stove_on only valid if stove on for 2h uninterrupted (mirrors RULE 1)
+    stove_on_2h_uninterrupted = stove_on_in_window and not stove_off_in_2h
     heater_evts = [e for e in window_events if e["sensor_id"] == "WATER_HEATER_01"]
     heater_currently_on = bool(heater_evts) and heater_evts[-1]["value"] == "1"
 
@@ -231,8 +335,10 @@ def _post_filter_llm_alerts(alerts: list, anchor_ts: str, window_events: list) -
         # Inactivity: only valid 09:00–21:00, and only if motion truly absent
         if risk == "inactivity" and (hour < 9 or hour > 21 or any_motion):
             continue
-        # Stove alerts only if stove was actually ON in this window
-        if risk in ("stove_on", "stove_unattended") and not stove_on_in_window:
+        # Stove_on only if on for 2h uninterrupted; stove_unattended if door opened while stove on
+        if risk == "stove_on" and not stove_on_2h_uninterrupted:
+            continue
+        if risk == "stove_unattended" and not stove_on_in_window:
             continue
         # Water heater only if it is still on at end of window
         if risk == "water_heater_on" and not heater_currently_on:
@@ -281,13 +387,17 @@ def run_audit(anchor_ts: str) -> list:
     alerts = []
     hour = datetime.fromisoformat(anchor_ts).hour
 
-    # --- RULE 1: Stove left on ---
-    if state.get("STOVE_POWER_01") == "1":
+    # --- RULE 1: Stove left on for 2+ hours with no off event ---
+    # Just cooking is fine; only alert when the stove has been running uninterrupted for 2+ hours
+    stove_2h_window = get_window(anchor_ts, hours=2)
+    stove_2h_on = any(e["sensor_id"] == "STOVE_POWER_01" and e["value"] == "1" for e in stove_2h_window)
+    stove_2h_off = any(e["sensor_id"] == "STOVE_POWER_01" and e["value"] == "0" for e in stove_2h_window)
+    if stove_2h_on and not stove_2h_off:
         alerts.append(_make_alert(anchor_ts, "stove_on",
             "high",
-            f"Stove is still ON at {anchor_ts[11:16]}. No off event detected in the last hour."))
+            f"Stove has been ON continuously for 2+ hours ending at {anchor_ts[11:16]} with no off event."))
 
-    # --- RULE 2: Stove on + door opened (left home while cooking) ---
+    # --- RULE 2: Stove on + door opened (left home while cooking) — always critical ---
     # Check for an open EVENT in the window — not the final state (door closes behind them)
     door_opened_in_window = any(
         e["sensor_id"] == "DOOR_CONTACT_01" and e["value"] == "1"
@@ -396,11 +506,13 @@ def run_audit(anchor_ts: str) -> list:
             alerts.append(la)
             existing_risks.add(la["risk"])
 
-    # Persist alerts
+    # Persist alerts and push to ThingsBoard
     if alerts:
         existing = _load_alerts()
         existing.extend(alerts)
         _save_alerts(existing)
+        for a in alerts:
+            _push_tb_alarm(a)
 
     return alerts
 
@@ -413,9 +525,19 @@ def run_full_day_audit(base_date: str) -> list:
     """
     from datetime import datetime as _dt, timedelta as _td
     all_alerts = []
+    next_date = (_dt.strptime(base_date, "%Y-%m-%d") + _td(days=1)).strftime("%Y-%m-%d")
 
-    # Clear previous alerts for this run
-    _save_alerts([])
+    # Clear previous alerts for this date (and next-day spillover) only —
+    # preserves historical alerts from other dates
+    existing = _load_alerts()
+    existing = [a for a in existing if not (
+        a.get("timestamp", "").startswith(base_date) or
+        a.get("timestamp", "").startswith(next_date)
+    )]
+    _save_alerts(existing)
+
+    # Clear ThingsBoard alarms so re-runs start with a clean slate
+    _clear_tb_alarms()
 
     # Same-day audit: 07:00 – 23:00
     for hour in range(7, 24):
@@ -427,7 +549,6 @@ def run_full_day_audit(base_date: str) -> list:
         all_alerts.extend(alerts)
 
     # Next-day early morning: 00:00 – 05:00 (catches 3 AM night exits)
-    next_date = (_dt.strptime(base_date, "%Y-%m-%d") + _td(days=1)).strftime("%Y-%m-%d")
     for hour in range(0, 6):
         anchor_ts = f"{next_date}T{hour:02d}:00:00"
         alerts = run_audit(anchor_ts)

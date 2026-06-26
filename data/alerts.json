@@ -14,20 +14,32 @@
   {
     "timestamp": "2026-06-26T12:00:00",
     "risk": "fridge_left_open",
-    "severity": "medium",
-    "reason": "FRIDGE_DOOR_01 = open at 12:00"
+    "severity": "low",
+    "reason": "FRIDGE_DOOR_01=open"
   },
   {
     "timestamp": "2026-06-26T13:00:00",
     "risk": "stove_on",
     "severity": "high",
-    "reason": "Stove is still ON at 13:00. No off event detected in the last hour."
+    "reason": "Stove has been ON continuously for 2+ hours ending at 13:00 with no off event."
   },
   {
     "timestamp": "2026-06-26T13:00:00",
     "risk": "stove_unattended",
     "severity": "critical",
     "reason": "Stove is ON and front door was opened. Resident may have left home while cooking."
+  },
+  {
+    "timestamp": "2026-06-26T14:00:00",
+    "risk": "stove_on",
+    "severity": "high",
+    "reason": "Stove has been ON continuously for 2+ hours ending at 14:00 with no off event."
+  },
+  {
+    "timestamp": "2026-06-26T14:00:00",
+    "risk": "stove_unattended",
+    "severity": "critical",
+    "reason": "STOVE_POWER_01=on at 13:30"
   },
   {
     "timestamp": "2026-06-26T19:00:00",

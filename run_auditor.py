@@ -26,7 +26,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai"))
 
-from safety_auditor import run_audit, run_full_day_audit
+from safety_auditor import run_audit, run_full_day_audit, _load_alerts, _save_alerts, _clear_tb_alarms
 from app_settings import POLL_INTERVAL_SECONDS, SIMULATED_START_HOUR, SIMULATED_END_HOUR
 
 
@@ -42,6 +42,15 @@ def run_simulated(base_date: str):
     print("Iterating through each hour checkpoint...\n")
 
     next_date = (datetime.date.fromisoformat(base_date) + datetime.timedelta(days=1)).isoformat()
+
+    # Clear stale alerts for this date and next-day spillover, then reset TB alarms
+    existing = _load_alerts()
+    existing = [a for a in existing if not (
+        a.get("timestamp", "").startswith(base_date) or
+        a.get("timestamp", "").startswith(next_date)
+    )]
+    _save_alerts(existing)
+    _clear_tb_alarms()
 
     checkpoints = (
         [(base_date, h) for h in range(SIMULATED_START_HOUR, SIMULATED_END_HOUR + 1)]
