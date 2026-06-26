@@ -9,9 +9,9 @@ Produces:
 
 import json
 import datetime
-from ai.storage import get_all_events_today
-from ai.safety_auditor import run_full_day_audit
-from ai.llm_reporter import generate_report
+from storage import get_all_events_today
+from safety_auditor import load_alerts_for_date
+from llm_reporter import generate_report, answer_question
 
 
 def _detect_activities_from_day(events: list) -> list:
@@ -25,23 +25,35 @@ def _detect_activities_from_day(events: list) -> list:
 
     activities = []
 
-    if ("BED_PRESSURE_01", "empty") in seen:
+    if ("BED_PRESSURE_01", "0") in seen:
         activities.append("wake_up")
 
-    if ("BATH_WATER_01", "flow") in seen and ("SOAP_VIB_01", "used") in seen:
+    if ("BATH_WATER_01", "1") in seen and ("SOAP_VIB_01", "1") in seen:
         activities.append("hygiene")
 
-    if ("FRIDGE_DOOR_01", "open") in seen:
+    if ("FRIDGE_DOOR_01", "1") in seen:
         activities.append("eating")
 
-    if ("MED_BOX_01", "used") in seen:
+    if ("MED_BOX_01", "1") in seen:
         activities.append("medication_taken")
 
-    if ("STOVE_POWER_01", "on") in seen:
+    if ("STOVE_POWER_01", "1") in seen:
         activities.append("cooking_risk")
 
-    if ("DOOR_CONTACT_01", "open") in seen:
+    if ("DOOR_CONTACT_01", "1") in seen:
         activities.append("leaving_home")
+
+    if ("TOILET_OCCUPANCY_01", "1") in seen:
+        activities.append("toilet_use")
+
+    if ("WATER_HEATER_01", "1") in seen:
+        activities.append("water_heater_used")
+
+    if ("BALCONY_PIR_01", "1") in seen:
+        activities.append("balcony_visit")
+
+    if any(s == "SOIL_MOISTURE_01" for s, _ in seen):
+        activities.append("plant_watering")
 
     return activities
 
@@ -52,16 +64,18 @@ def build_daily_summary(date: str) -> dict:
     date: YYYY-MM-DD string
     """
     events = get_all_events_today(date)
-    alerts = run_full_day_audit(date)
-
+    alerts = load_alerts_for_date(date)
+    if not alerts:
+        print(f"[narrator] No alerts found for {date}. Run the Safety Auditor first.")
     # Detect activities from all events seen during the day
     event_dicts = [{"sensor_id": e["sensor_id"], "value": e["value"]} for e in events]
     activities = _detect_activities_from_day(event_dicts)
 
-    # Group alerts by severity
-    critical = [a for a in alerts if a["severity"] == "critical"]
-    high     = [a for a in alerts if a["severity"] == "high"]
-    medium   = [a for a in alerts if a["severity"] == "medium"]
+    # Group alerts by severity (case-insensitive)
+    critical = [a for a in alerts if a.get("severity", "").lower() == "critical"]
+    high     = [a for a in alerts if a.get("severity", "").lower() == "high"]
+    medium   = [a for a in alerts if a.get("severity", "").lower() == "medium"]
+    low      = [a for a in alerts if a.get("severity", "").lower() == "low"]
 
     # Build event timeline (human-readable)
     timeline = [
@@ -77,6 +91,7 @@ def build_daily_summary(date: str) -> dict:
             "critical": len(critical),
             "high": len(high),
             "medium": len(medium),
+            "low": len(low),
             "total": len(alerts)
         },
         "alerts": alerts,
@@ -137,6 +152,39 @@ def run_narrator(date: str = None):
         json.dump(summary, f, indent=2)
     print(f"Full summary saved to: data/summary_{date}.json")
 
+    return summary
+
+
+def caregiver_qa_loop(date: str = None):
+    """
+    Runs the daily narrator report and then enters an interactive
+    Q&A loop so the caregiver can ask questions about the resident's day.
+    """
+    if date is None:
+        date = datetime.date.today().isoformat()
+
+    summary = run_narrator(date)
+
+    print("\n=== Caregiver Q&A ===")
+    print("You can now ask questions about today's activity.")
+    print("Type 'exit' or 'quit' to stop.\n")
+
+    while True:
+        try:
+            question = input("Your question: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nSession ended.")
+            break
+
+        if not question:
+            continue
+        if question.lower() in ("exit", "quit", "q"):
+            print("Goodbye.")
+            break
+
+        answer = answer_question(question, summary)
+        print(f"\nAssistant: {answer}\n")
+
 
 if __name__ == "__main__":
-    run_narrator()
+    caregiver_qa_loop()

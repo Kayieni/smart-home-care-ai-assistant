@@ -1,8 +1,67 @@
 {
-    "wake_up": "wake_up",
-    "hygiene": "hygiene",
-    "eating": "eating",
-    "medication": "medication_taken",
-    "cooking_risk": "cooking_risk",
-    "leaving_home": "leaving_home"
+    "activity_labels": {
+        "wake_up": "wake_up",
+        "hygiene": "hygiene",
+        "eating": "eating",
+        "medication_taken": "medication_taken",
+        "cooking_risk": "cooking_risk",
+        "leaving_home": "leaving_home",
+        "toilet_use": "toilet_use",
+        "water_heater_used": "water_heater_used",
+        "balcony_visit": "balcony_visit",
+        "plant_watering": "plant_watering"
+    },
+    "care_plan": {
+        "resident_name": "Maria",
+        "medication_deadline_hour": 10,
+        "inactivity_threshold_hours": 3,
+        "night_hours": {"start": 23, "end": 5},
+        "rules": [
+            {
+                "id": "R01",
+                "description": "Medication must be taken by 10:00 AM every day.",
+                "priority": "high"
+            },
+            {
+                "id": "R02",
+                "description": "Hands must be washed with soap and water after every toilet visit.",
+                "priority": "medium"
+            },
+            {
+                "id": "R03",
+                "description": "Hands must be washed with soap and water after every cooking activity.",
+                "priority": "medium"
+            },
+            {
+                "id": "R04",
+                "description": "The toilet must be used at least once during the day (between 07:00 and 22:00).",
+                "priority": "medium"
+            },
+            {
+                "id": "R05",
+                "description": "The stove or oven must not be left on unattended. If the resident leaves the kitchen, the stove should be off within 10 minutes.",
+                "priority": "critical"
+            },
+            {
+                "id": "R06",
+                "description": "The fridge door should not remain open for more than 10 minutes.",
+                "priority": "low"
+            },
+            {
+                "id": "R07",
+                "description": "The water heater should not remain on for more than 2 hours without any shower activity detected.",
+                "priority": "medium"
+            },
+            {
+                "id": "R08",
+                "description": "No exits from the home should occur between 23:00 and 05:00. Any night-time door opening is a potential safety concern.",
+                "priority": "high"
+            },
+            {
+                "id": "R09",
+                "description": "If no movement is detected for more than 3 consecutive hours during daytime (09:00–21:00), a welfare check should be triggered.",
+                "priority": "medium"
+            }
+        ]
+    }
 }

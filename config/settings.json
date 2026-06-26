@@ -1,0 +1,21 @@
+{
+  "_comment": "Global configuration — edit this file to tune the system without touching code.",
+
+  "simulation": {
+    "_comment": "time_scale_seconds_per_hour: real seconds per simulated hour. 3 = full day in ~48s. Use 120 for a slower demo.",
+    "time_scale_seconds_per_hour": 3
+  },
+
+  "auditor": {
+    "poll_interval_seconds": 60,
+    "simulated_start_hour": 7,
+    "simulated_end_hour": 23,
+    "inactivity_threshold_hours": 3
+  },
+
+  "llm": {
+    "ollama_url": "http://localhost:11434/api/generate",
+    "ollama_model": "llama3.2",
+    "request_timeout_seconds": 60
+  }
+}

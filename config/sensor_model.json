@@ -1,6 +1,11 @@
 {
   "project": "invisible_caregiver",
-  "version": "1.1",
+  "version": "1.2",
+
+  "value_format_legend": {
+    "boolean": "1 = active state, 0 = inactive state",
+    "integer": "numeric reading in the specified unit"
+  },
 
   "sensors": [
 
@@ -10,7 +15,8 @@
       "location": "bedroom_bed",
       "activity": "sleep_wake",
       "risk_category": "movement",
-      "possible_values": ["occupied", "empty"]
+      "value_format": "boolean",
+      "value_map": { "1": "occupied", "0": "empty" }
     },
     {
       "sensor_id": "BEDROOM_PIR_01",
@@ -18,7 +24,8 @@
       "location": "bedroom",
       "activity": "movement",
       "risk_category": "movement",
-      "possible_values": ["motion", "no_motion"]
+      "value_format": "boolean",
+      "value_map": { "1": "motion", "0": "no_motion" }
     },
 
     {
@@ -27,7 +34,8 @@
       "location": "bathroom_sink",
       "activity": "hand_washing",
       "risk_category": "hygiene",
-      "possible_values": ["flow", "no_flow"]
+      "value_format": "boolean",
+      "value_map": { "1": "flow", "0": "no_flow" }
     },
     {
       "sensor_id": "SOAP_VIB_01",
@@ -35,7 +43,8 @@
       "location": "soap_dispenser",
       "activity": "hand_washing",
       "risk_category": "hygiene",
-      "possible_values": ["used", "not_used"]
+      "value_format": "boolean",
+      "value_map": { "1": "used", "0": "not_used" }
     },
     {
       "sensor_id": "TOILET_OCCUPANCY_01",
@@ -43,7 +52,8 @@
       "location": "bathroom_toilet",
       "activity": "toilet_use",
       "risk_category": "hygiene",
-      "possible_values": ["occupied", "empty"]
+      "value_format": "boolean",
+      "value_map": { "1": "occupied", "0": "empty" }
     },
 
     {
@@ -52,7 +62,8 @@
       "location": "kitchen_fridge",
       "activity": "eating",
       "risk_category": "activity",
-      "possible_values": ["open", "closed"]
+      "value_format": "boolean",
+      "value_map": { "1": "open", "0": "closed" }
     },
     {
       "sensor_id": "KITCHEN_PIR_01",
@@ -60,7 +71,8 @@
       "location": "kitchen",
       "activity": "movement",
       "risk_category": "activity",
-      "possible_values": ["motion", "no_motion"]
+      "value_format": "boolean",
+      "value_map": { "1": "motion", "0": "no_motion" }
     },
     {
       "sensor_id": "STOVE_POWER_01",
@@ -68,7 +80,8 @@
       "location": "kitchen_stove",
       "activity": "cooking",
       "risk_category": "safety",
-      "possible_values": ["on", "off"]
+      "value_format": "boolean",
+      "value_map": { "1": "on", "0": "off" }
     },
     {
       "sensor_id": "OVEN_TEMP_01",
@@ -76,7 +89,8 @@
       "location": "kitchen_oven",
       "activity": "cooking",
       "risk_category": "safety",
-      "possible_values": ["number (°C)"]
+      "value_format": "integer",
+      "unit": "°C"
     },
 
     {
@@ -85,7 +99,8 @@
       "location": "medicine_box",
       "activity": "medication",
       "risk_category": "health",
-      "possible_values": ["used", "not_used"]
+      "value_format": "boolean",
+      "value_map": { "1": "used", "0": "not_used" }
     },
 
     {
@@ -94,7 +109,8 @@
       "location": "front_door",
       "activity": "exit_home",
       "risk_category": "safety",
-      "possible_values": ["open", "closed"]
+      "value_format": "boolean",
+      "value_map": { "1": "open", "0": "closed" }
     },
     {
       "sensor_id": "HALLWAY_PIR_01",
@@ -102,7 +118,8 @@
       "location": "hallway",
       "activity": "movement",
       "risk_category": "movement",
-      "possible_values": ["motion", "no_motion"]
+      "value_format": "boolean",
+      "value_map": { "1": "motion", "0": "no_motion" }
     },
 
     {
@@ -111,7 +128,8 @@
       "location": "bathroom_heater",
       "activity": "utility_usage",
       "risk_category": "safety",
-      "possible_values": ["on", "off"]
+      "value_format": "boolean",
+      "value_map": { "1": "on", "0": "off" }
     },
 
     {
@@ -120,7 +138,8 @@
       "location": "balcony",
       "activity": "leisure",
       "risk_category": "activity",
-      "possible_values": ["motion", "no_motion"]
+      "value_format": "boolean",
+      "value_map": { "1": "motion", "0": "no_motion" }
     },
     {
       "sensor_id": "SOIL_MOISTURE_01",
@@ -128,7 +147,8 @@
       "location": "balcony_plants",
       "activity": "plant_watering",
       "risk_category": "activity",
-      "possible_values": ["number (%)"]
+      "value_format": "integer",
+      "unit": "%"
     }
 
   ]

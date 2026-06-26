@@ -6,11 +6,8 @@ _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 with open(os.path.join(_root, "config", "rules.json"), "r") as f:
     RULE_MAP = json.load(f)
 
-KNOWN_SENSORS = [
-    "BED_PRESSURE_01", "BEDROOM_PIR_01", "BATH_WATER_01", "SOAP_VIB_01",
-    "FRIDGE_DOOR_01", "KITCHEN_PIR_01", "MED_BOX_01",
-    "STOVE_POWER_01", "DOOR_CONTACT_01", "HALLWAY_PIR_01"
-]
+# Sensor definitions — single source of truth from sensor_model.json
+from sensor_model_loader import SENSOR_IDS as KNOWN_SENSORS
 
 
 def build_sensor_map(events):
